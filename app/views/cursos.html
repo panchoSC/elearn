@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/style-cursos.css">
+</head>
+
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4">Cursos Disponibles</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="cursos-container">
+
+        </div>
+    </div>
+
+    <!-- Modal para editar la lección -->
+    <div class="modal fade" id="editCourseModal" tabindex="-1" aria-labelledby="editCourseModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCourseModalLabel">Editar Curso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Formulario de edición del curso -->
+                    <form id="editCourseForm">
+                        <div class="mb-3">
+                            <label for="courseName" class="form-label">Nombre del Curso</label>
+                            <input type="text" class="form-control" id="courseName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="courseDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="startDate" class="form-label">Fecha de Inicio</label>
+                            <input type="date" class="form-control" id="startDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="endDate" class="form-label">Fecha de Fin</label>
+                            <input type="date" class="form-control" id="endDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseState" class="form-label">Estado del Curso</label>
+                            <select class="form-select" id="courseState" required>
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                            <div class="form-text mt-2">
+                                <span class="badge bg-success">Activo</span>: El curso está disponible para los
+                                estudiantes.<br>
+                                <span class="badge bg-secondary">Inactivo</span>: El curso no está disponible
+                                temporalmente.
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" id="saveCourseChanges">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cursosContainer = document.getElementById('cursos-container');
+            const cursos = JSON.parse('{{cursos}}');
+            const userRole = '{{userRole}}';
+
+            function getBadgeClass(estado) {
+                switch (estado) {
+                    case 'activo': return 'bg-success';
+                    case 'inactivo': return 'bg-secondary';
+                    default: return 'bg-warning';
+                }
+            }
+
+            function createCourseCard(curso) {
+                return `
+                    <div class="col">
+                        <div class="card h-100 curso-card">
+                            <div class="card-header bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge ${getBadgeClass(curso.estado)}">
+                                        ${curso.estado.charAt(0).toUpperCase() + curso.estado.slice(1)}
+                                    </span>
+                                    <small class="text-muted">#${curso.codigo}</small>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">${curso.nombre}</h5>
+                                <p class="card-text text-muted small">${curso.descripcion}</p>
+
+                                <div class="mt-4">
+                                    <div class="row small">
+                                        <div class="col-6">
+                                            <div class="text-muted">Inicio</div>
+                                            <div class="fw-bold">${curso.fecha_inicio}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-muted">Fin</div>
+                                            <div class="fw-bold">${curso.fecha_fin}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small">
+                                        Creado: ${curso.created_at}
+                                    </span>
+                                    <div class="btn-group">
+                                        ${userRole === 'docente' ? 
+                                        `
+                                        <a href="/curso/${curso.id}/test" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-journal-check me-1"></i>Test
+                                        </a>
+                                        <a href="/curso/${curso.id}/lecciones" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-book me-1"></i>Lecciones
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editCourseModal" data-course-id="${curso.id}" data-course-name="${curso.nombre}" data-course-description="${curso.descripcion}" data-course-start="${curso.fecha_inicio}" data-course-end="${curso.fecha_fin}" data-course-state="${curso.estado}">
+                                            <i class="bi bi-pencil me-1"></i>Editar
+                                        </button>
+                                     
+                                        ` : 
+                                        `
+                                        <a href="/curso/${curso.id}/contenido" class="btn btn-sm btn-outline-info">
+                                            <i class="bi bi-play-circle me-1"></i>Ver Contenido
+                                        </a>
+                                        <a href="/curso/${curso.id}/test" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-journal-check me-1"></i>Realizar Test
+                                        </a>
+                                        `}
+                                    </div>
+                                    
+                                </div>
+                               
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(${curso.id})">
+                                        <i class="bi bi-trash me-1"></i>Eliminar Curso
+                                    </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Cargar cursos
+            if (cursos && cursos.length > 0) {
+                cursosContainer.innerHTML = cursos.map(curso => createCourseCard(curso)).join('');
+            } else {
+                cursosContainer.innerHTML = `
+                    <div class="col-12 text-center">
+                        <p class="text-muted">No hay cursos disponibles en este momento.</p>
+                    </div>
+                `;
+            }
+
+            // Función para convertir "dd/mm/yyyy" a "yyyy-mm-dd"
+            function convertDateToInputFormat(dateStr) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+                return dateStr;
+            }
+
+            // Función para llenar el modal con los datos del curso
+            const editButtons = document.querySelectorAll('[data-bs-toggle="modal"]');
+            editButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const courseId = button.getAttribute('data-course-id');
+                    const courseName = button.getAttribute('data-course-name');
+                    const courseDescription = button.getAttribute('data-course-description');
+                    let courseStart = button.getAttribute('data-course-start');
+                    let courseEnd = button.getAttribute('data-course-end');
+                    const courseState = button.getAttribute('data-course-state');
+
+                    // Convertir fechas al formato input
+                    courseStart = convertDateToInputFormat(courseStart);
+                    courseEnd = convertDateToInputFormat(courseEnd);
+
+                    document.getElementById('courseName').value = courseName;
+                    document.getElementById('courseDescription').value = courseDescription;
+                    document.getElementById('startDate').value = courseStart;
+                    document.getElementById('endDate').value = courseEnd;
+                    document.getElementById('courseState').value = courseState;
+
+                    const saveButton = document.getElementById('saveCourseChanges');
+                    saveButton.onclick = async () => {
+                        const estadoSelect = document.getElementById('courseState');
+                        const estadoValue = estadoSelect.value;
+
+                        if (!estadoValue) {
+                            alert('Por favor, seleccione un estado para el curso.');
+                            return;
+                        }
+
+                        const updatedCourse = {
+                            id: courseId,
+                            nombre: document.getElementById('courseName').value,
+                            descripcion: document.getElementById('courseDescription').value,
+                            fecha_inicio: document.getElementById('startDate').value,
+                            fecha_fin: document.getElementById('endDate').value,
+                            estado: estadoValue
+                        };
+
+                        // Mostrar en consola los datos actualizados
+                        console.log("Datos del curso a actualizar:", updatedCourse);
+
+                        try {
+                            const response = await fetch(`/curso/${courseId}/actualizar`, {
+                                method: 'POST',  // Cambiamos a POST para mayor compatibilidad
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-HTTP-Method-Override': 'PUT'  // Mantenemos el override para el backend
+                                },
+                                body: JSON.stringify(updatedCourse)
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok) {
+                                alert('Curso actualizado correctamente');
+                                window.location.reload();
+                            } else {
+                                alert(`Error al actualizar el curso: ${data.message || 'Error desconocido'}`);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error al actualizar el curso: ' + error.message);
+                        }
+                    };
+                });
+            });
+        });
+
+        async function deleteCourse(courseId) {
+            if (confirm('¿Estás seguro de que deseas eliminar este curso?')) {
+                try {
+                    const response = await fetch(`/courses/delete/${courseId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        alert('Curso eliminado correctamente');
+                        window.location.reload();
+                    } else {
+                        const data = await response.json();
+                        alert(`Error al eliminar el curso: ${data.message || 'Error desconocido'}`);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al eliminar el curso: ' + error.message);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

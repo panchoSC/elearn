@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elearn - Perfil</title>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+
+<body>
+    <div class="container py-4">
+        <!-- Profile Header -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="profile-emoji me-4" style="font-size: 4rem;">👤</div>
+            <div class="profile-info">
+                        <h1 class="mb-1">{{nombre}} {{apellido}}</h1>
+                        <p class="text-muted mb-1">{{email}}</p>
+                        <p class="mb-1"><span class="badge bg-primary">{{tipo_usuario}}</span></p>
+                        <small class="text-muted">Miembro desde: {{fecha_ingreso}}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Dashboard -->
+        <div id="teacher-dashboard" style="display: none;">
+            <div class="row">
+                <!-- Courses Overview -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Mis Cursos</h5>
+                            <a href="/crear-cursos" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-lg"></i> Nuevo Curso
+                            </a>
+                        </div>
+                        <div class="card-body" id="teacher-courses">
+                            <!-- Teacher courses will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Questions Management -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Gestión de Preguntas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="questions-management">
+                                <!-- Questions form will be here -->
+                                <form id="question-form" class="mb-4" style="display: none;">
+                                    <div class="mb-3">
+                                        <label class="form-label">Curso</label>
+                                        <select class="form-select" id="course-select" required>
+                                            <!-- Courses will be loaded here -->
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Lección</label>
+                                        <select class="form-select" id="lesson-select" required>
+                                            <!-- Lessons will be loaded here -->
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipo de Pregunta</label>
+                                        <select class="form-select" id="question-type" required>
+                                            <option value="multiple_choice">Opción Múltiple</option>
+                                            <option value="true_false">Verdadero/Falso</option>
+                                            <option value="open">Pregunta Abierta</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Pregunta</label>
+                                        <textarea class="form-control" id="question-text" required></textarea>
+                                    </div>
+                                    <div id="answers-container">
+                                        <!-- Dynamic answers inputs will be here -->
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Guardar Pregunta</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Statistics -->
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Estadísticas de Enseñanza</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="teacher-statistics">
+                                <!-- Teacher statistics will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Dashboard -->
+        <div id="student-dashboard" style="display: none;">
+            <div class="row">
+                <!-- Progress Overview -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Mis Cursos y Progreso</h5>
+                        </div>
+                        <div class="card-body" id="courses-progress">
+                            <!-- Student courses progress will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Statistics -->
+                <div class="col-md-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Mis Estadísticas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="student-statistics">
+                                <!-- Student statistics will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userType = '{{tipo_usuario}}';
+            const teacherDashboard = document.getElementById('teacher-dashboard');
+            const studentDashboard = document.getElementById('student-dashboard');
+
+            // Show appropriate dashboard based on user type
+            if (userType === 'docente') {
+                teacherDashboard.style.display = 'block';
+                loadTeacherDashboard();
+            } else {
+                studentDashboard.style.display = 'block';
+                loadStudentDashboard();
+            }
+        });
+
+        // Teacher Dashboard Functions
+        function loadTeacherDashboard() {
+            const teacherData = JSON.parse('{{teacherData}}');
+            loadTeacherCourses(teacherData.courses);
+            loadTeacherStatistics(teacherData.statistics);
+            initializeQuestionForm();
+        }
+
+        function loadTeacherCourses(courses) {
+            const coursesContainer = document.getElementById('teacher-courses');
+            if (courses && courses.length > 0) {
+                coursesContainer.innerHTML = courses.map(course => `
+                    <div class="course-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${course.nombre}</h6>
+                                <small class="text-muted">Código: ${course.codigo}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="editCourse(${course.id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="manageQuestions(${course.id})">
+                                    <i class="bi bi-question-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                coursesContainer.innerHTML = `
+                    <p class="text-muted text-center mb-0">No has creado ningún curso todavía.</p>
+                `;
+            }
+        }
+
+        // Student Dashboard Functions
+        function loadStudentDashboard() {
+            const coursesProgress = JSON.parse('{{coursesProgress}}');
+            loadStudentProgress(coursesProgress);
+            loadStudentStatistics(coursesProgress);
+        }
+
+        function loadStudentProgress(coursesProgress) {
+            const coursesContainer = document.getElementById('courses-progress');
+            if (coursesProgress.length > 0) {
+                coursesContainer.innerHTML = coursesProgress.map(item => `
+                    <div class="course-progress mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">${item.course.nombre}</h6>
+                            <span class="text-muted small">Último acceso: ${new Date(item.lastAccessed).toLocaleDateString()}</span>
+                        </div>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" 
+                                style="width: ${item.progressPercentage}%;" 
+                                aria-valuenow="${item.progressPercentage}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">
+                                ${item.completedLessons} de ${item.totalLessons} lecciones completadas
+                            </small>
+                            <small class="text-muted">
+                                ${Math.round(item.progressPercentage)}%
+                            </small>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                coursesContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No estás inscrito en ningún curso todavía.</p>
+                        <a href="/cursos" class="btn btn-primary mt-3">
+                            <i class="bi bi-book me-2"></i>Explorar Cursos
+                        </a>
+    </div>
+                `;
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

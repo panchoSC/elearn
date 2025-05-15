@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - {{curso_nombre}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <style>
+        .question-container {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+        }
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #212529;
+        }
+        .options-container {
+            margin-left: 1.5rem;
+        }
+        .form-check {
+            margin-bottom: 0.75rem;
+        }
+        .form-check-input {
+            margin-top: 0.3rem;
+            cursor: pointer;
+        }
+        .form-check-label {
+            margin-left: 0.5rem;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .submit-button {
+            margin-top: 2rem;
+            width: 100%;
+            padding: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/cursos">Cursos</a></li>
+                <li class="breadcrumb-item"><a href="/curso/{{curso_id}}/contenido">{{curso_nombre}}</a></li>
+                <li class="breadcrumb-item active">Test</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h4 class="mb-0">{{curso_nombre}} - Test</h4>
+                        <p class="text-muted mb-0 mt-2">Responde todas las preguntas para completar el test.</p>
+                    </div>
+                    <div class="card-body">
+                        <div id="mensajeNoPreguntas" style="display: none;" class="text-center py-4">
+                            <p class="text-muted mb-0">No hay preguntas disponibles para este test.</p>
+                        </div>
+
+                        <form id="testForm" action="/curso/{{curso_id}}/respuestas" method="POST" style="display: none;">
+                            <div id="preguntasContainer">
+                                <!-- Las preguntas se insertarán aquí dinámicamente -->
+                            </div>
+                            <button type="submit" class="btn btn-primary submit-button">
+                                Enviar Respuestas
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nueva Pregunta (solo visible para profesores) -->
+    <div class="modal fade" id="nuevaPreguntaModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Pregunta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="preguntaForm" action="/curso/{{curso_id}}/pregunta" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Pregunta</label>
+                            <input type="text" class="form-control" name="question_text" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Pregunta</label>
+                            <select class="form-select" name="question_type" id="questionType" required>
+                                <option value="multiple_choice">Opción Múltiple</option>
+                                <option value="true_false">Verdadero/Falso</option>
+                            </select>
+                        </div>
+                        <div id="opcionesContainer">
+                            <!-- Las opciones se generarán dinámicamente según el tipo de pregunta -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Pregunta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let preguntas = [];
+        try {
+            preguntas = JSON.parse("{{preguntas}}".replace(/\\/g, ''));
+        } catch (e) {
+            console.error('Error al parsear preguntas:', e);
+            preguntas = [];
+        }
+        const isTeacher = "{{isTeacher}}" === "true";
+
+        // Función de inicialización
+        function initializePage() {
+            const mensajeNoPreguntas = document.getElementById('mensajeNoPreguntas');
+            const testForm = document.getElementById('testForm');
+
+            if (!preguntas || preguntas.length === 0) {
+                mensajeNoPreguntas.style.display = 'block';
+                testForm.style.display = 'none';
+            } else {
+                mensajeNoPreguntas.style.display = 'none';
+                testForm.style.display = 'block';
+                renderPreguntas();
+            }
+
+            if (isTeacher) {
+                setupTeacherControls();
+            }
+        }
+
+        // Función para renderizar las preguntas
+        function renderPreguntas() {
+            const preguntasContainer = document.getElementById('preguntasContainer');
+            preguntasContainer.innerHTML = '';
+
+            preguntas.forEach((pregunta, index) => {
+                const preguntaDiv = document.createElement('div');
+                preguntaDiv.className = 'question-container';
+                
+                // Determinar si es pregunta de verdadero/falso o múltiple opción
+                const isTrueFalse = pregunta.question_type === 'true_false';
+                
+                preguntaDiv.innerHTML = `
+                    <div class="question-text">
+                        ${index + 1}. ${pregunta.question_text}
+                    </div>
+                    <div class="options-container">
+                        ${pregunta.respuestas.map((respuesta, rIndex) => `
+                            <div class="form-check">
+                                <input class="form-check-input" type="${isTrueFalse ? 'radio' : 'radio'}" 
+                                    name="question_${pregunta.id}" 
+                                    id="q${pregunta.id}_r${rIndex}"
+                                    value="${respuesta.id}" required>
+                                <label class="form-check-label" for="q${pregunta.id}_r${rIndex}">
+                                    ${respuesta.answer_text}
+                                </label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                preguntasContainer.appendChild(preguntaDiv);
+            });
+        }
+
+        // Configuración de controles para profesores
+        function setupTeacherControls() {
+            const questionType = document.getElementById('questionType');
+            const opcionesContainer = document.getElementById('opcionesContainer');
+
+            questionType.addEventListener('change', function() {
+                opcionesContainer.innerHTML = '';
+                if (this.value === 'true_false') {
+                    opcionesContainer.innerHTML = `
+                        <div class="mb-3">
+                            <label class="form-label">Opciones</label>
+                            <div class="form-check mb-2">
+                                <input type="radio" class="form-check-input" name="correct_answer" value="0" required>
+                                <input type="text" class="form-control" name="answers[]" value="Verdadero" readonly>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="radio" class="form-check-input" name="correct_answer" value="1" required>
+                                <input type="text" class="form-control" name="answers[]" value="Falso" readonly>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    opcionesContainer.innerHTML = `
+                        <div class="mb-3">
+                            <label class="form-label">Opciones de Respuesta</label>
+                            <div class="option-group mb-2">
+                                <div class="input-group">
+                                    <div class="input-group-text">
+                                        <input type="radio" name="correct_answer" value="0" required>
+                                    </div>
+                                    <input type="text" class="form-control" name="answers[]" required>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="agregarOpcion()">
+                                <i class="bi bi-plus-circle me-2"></i>Agregar Opción
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+
+            // Trigger initial render
+            questionType.dispatchEvent(new Event('change'));
+        }
+
+        // Función para agregar una nueva opción (solo para multiple choice)
+        function agregarOpcion() {
+            const container = document.querySelector('#opcionesContainer .mb-3');
+            const newOption = document.createElement('div');
+            newOption.className = 'option-group mb-2';
+            newOption.innerHTML = `
+                <div class="input-group">
+                    <div class="input-group-text">
+                        <input type="radio" name="correct_answer" value="${container.children.length - 1}" required>
+                    </div>
+                    <input type="text" class="form-control" name="answers[]" required>
+                    <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.parentElement.remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.insertBefore(newOption, container.lastElementChild);
+        }
+
+        // Inicializar la página cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+    
+</body>
+</html> 

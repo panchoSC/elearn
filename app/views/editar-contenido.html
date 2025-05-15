@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Contenido</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/cursos">Cursos</a></li>
+                <li class="breadcrumb-item"><a href="/curso/{{curso.id}}">{{curso.nombre}}</a></li>
+                <li class="breadcrumb-item"><a href="/curso/{{curso.id}}/lecciones">Lecciones</a></li>
+                <li class="breadcrumb-item"><a href="/leccion/{{leccion.id}}/contenido">{{leccion.titulo}}</a></li>
+                <li class="breadcrumb-item active">Editar Contenido</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Editar Contenido</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="editarContenidoForm" action="/contenido/{{contenido.id}}/actualizar" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label">Título</label>
+                                <input type="text" class="form-control" name="titulo" value="{{contenido.titulo}}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Contenido (Markdown)</label>
+                                <div class="d-flex gap-3">
+                                    <div class="flex-grow-1">
+                                        <textarea class="form-control" name="contenido" id="contenidoInput" rows="15" required>{{contenido.contenido}}</textarea>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="card h-100">
+                                            <div class="card-header">
+                                                <h6 class="mb-0">Vista Previa</h6>
+                                            </div>
+                                            <div class="card-body markdown-preview">
+                                                <!-- La vista previa se mostrará aquí -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted">Usa Markdown para formatear el contenido. La vista previa se actualiza automáticamente.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Orden</label>
+                                <input type="number" class="form-control" name="orden" value="{{contenido.orden}}" min="1" required>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <a href="/leccion/{{leccion.id}}/contenido" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>Volver
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-2"></i>Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contenidoInput = document.getElementById('contenidoInput');
+            const markdownPreview = document.querySelector('.markdown-preview');
+
+            function actualizarVistaPrevia() {
+                markdownPreview.innerHTML = marked.parse(contenidoInput.value);
+            }
+
+            contenidoInput.addEventListener('input', actualizarVistaPrevia);
+            actualizarVistaPrevia(); // Actualizar vista previa inicial
+        });
+    </script>
+</body>
+</html> 

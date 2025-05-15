@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contenido de la Lección</title>
+    <style>
+        /* Estilos aquí como ya los tenías */
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Contenido de la Lección</h1>
+    </header>
+
+    <div class="content-container" id="contentContainer">
+        <!-- Los contenidos de la lección se mostrarán aquí -->
+    </div>
+
+    <button class="create-btn" onclick="openModal()">Crear Contenido</button>
+
+    <!-- Modal de creación de contenido -->
+    <div id="contentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Crear Contenido para la Lección</h2>
+            <form id="createContentForm" onsubmit="submitContent(event)">
+                <input type="hidden" id="lesson_id" name="lesson_id">
+                <div>
+                    <label for="contentTitle">Título del Contenido:</label>
+                    <input type="text" id="contentTitle" name="titulo" class="form-input" required>
+                </div>
+                <div>
+                    <label for="contentDescription">Descripción del Contenido:</label>
+                    <textarea id="contentDescription" name="contenido" class="form-input" required></textarea>
+                </div>
+                <div>
+                    <label for="contentOrder">Orden:</label>
+                    <input type="number" id="contentOrder" name="orden" class="form-input" value="1" required>
+                </div>
+                <button type="submit" class="create-btn">Crear Contenido</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let lessonId = urlParams.get('lesson_id');  // 'id' es el nombre del parámetro
+
+        if (!lessonId) {
+            lessonId = 1234;  // Valor por defecto en caso de que no se encuentre el parámetro
+        }
+
+        console.log("Lesson ID:", lessonId);
+
+        function openModal() {
+            document.getElementById('lesson_id').value = lessonId; // Asignamos el 'lesson_id'
+            document.getElementById('contentModal').style.display = "block"; // Mostramos el modal
+        }
+
+        function closeModal() {
+            document.getElementById('contentModal').style.display = "none"; // Ocultamos el modal
+        }
+
+        async function submitContent(event) {
+            event.preventDefault();
+            const formData = new FormData(document.getElementById('createContentForm'));
+
+            const contentData = {
+                lesson_id: formData.get('lesson_id'),
+                title: formData.get('titulo'),
+                description: formData.get('contenido'),
+                order: formData.get('orden')
+            };
+
+            try {
+                const response = await fetch('/api/lecciones/contenido', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(contentData),
+                });
+
+                if (response.ok) {
+                    alert('¡Contenido creado correctamente!');
+                    closeModal(); // Cerrar el modal después de enviar
+                    fetchLessonContents(); // Recargar los contenidos
+                } else {
+                    alert('Error al crear el contenido.');
+                }
+            } catch (error) {
+                console.error('Error al enviar el formulario:', error);
+            }
+        }
+
+        async function fetchLessonContents() {
+            try {
+                const response = await fetch('/api/lecciones'); // Cambiar a la URL correcta si es necesario
+                if (response.ok) {
+                    const lessonContentData = await response.json();
+                    displayLessonContents(lessonContentData);
+                } else {
+                    alert('Error al obtener los contenidos.');
+                }
+            } catch (error) {
+                console.error('Error al obtener los contenidos:', error);
+            }
+        }
+
+        function displayLessonContents(contents) {
+            const contentContainer = document.getElementById('contentContainer');
+            contentContainer.innerHTML = ''; // Limpiar contenido previo
+
+            contents.forEach(content => {
+                const contentItem = document.createElement('div');
+                contentItem.classList.add('content-item');
+
+                contentItem.innerHTML =
+                    `<div>
+                        <h3>${content.title}</h3>
+                        <p>${content.description}</p>
+                    </div>
+                    <div class="buttons-container">
+                        <button class="complete-btn" onclick="markAsCompleted(${content.id})">
+                            ${content.completed ? 'Contenido Completado' : 'Marcar como Completado'}
+                        </button>
+                        <button class="delete-btn" onclick="deleteContent(${content.id})">Eliminar Contenido</button>
+                    </div>`;
+                contentContainer.appendChild(contentItem);
+            });
+        }
+
+        async function markAsCompleted(contentId) {
+            try {
+                const response = await fetch(`/api/lecciones/${contentId}/completar`, { method: 'PUT' });
+                if (response.ok) {
+                    alert('¡El contenido ha sido marcado como completado!');
+                    fetchLessonContents(); // Recargar los contenidos
+                } else {
+                    alert('Error al marcar como completado.');
+                }
+            } catch (error) {
+                console.error('Error al marcar como completado:', error);
+            }
+        }
+
+        async function deleteContent(contentId) {
+            try {
+                const response = await fetch(`/api/lecciones/${contentId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert('¡El contenido ha sido eliminado!');
+                    fetchLessonContents(); // Recargar los contenidos
+                } else {
+                    alert('Error al eliminar el contenido.');
+                }
+            } catch (error) {
+                console.error('Error al eliminar el contenido:', error);
+            }
+        }
+
+        fetchLessonContents(); // Obtener los contenidos al cargar la página
+    </script>
+</body>
+
+</html>

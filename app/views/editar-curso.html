@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Curso</title>
+</head>
+<body>
+    <h1>Editar Curso</h1>
+    <form action="/courses/update" method="POST">
+        <input type="hidden" name="id" value="{{curso.id}}">
+
+        <div>
+            <label for="nombre">Nombre del Curso:</label>
+            <input type="text" id="nombre" name="nombre" value="{{curso.nombre}}" required>
+        </div>
+
+        <div>
+            <label for="descripcion">Descripción:</label>
+            <textarea id="descripcion" name="descripcion" rows="4" required>{{curso.descripcion}}</textarea>
+        </div>
+
+        <div>
+            <label for="fecha_inicio">Fecha de Inicio:</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{curso.fecha_inicio}}" required>
+        </div>
+
+        <div>
+            <label for="fecha_fin">Fecha de Fin:</label>
+            <input type="date" id="fecha_fin" name="fecha_fin" value="{{curso.fecha_fin}}" required>
+        </div>
+
+        <div>
+            <label for="estado">Estado:</label>
+            <select id="estado" name="estado" required>
+                <option value="activo" {{curso.estado === 'activo' ? 'selected' : ''}}>Activo</option>
+                <option value="inactivo" {{curso.estado === 'inactivo' ? 'selected' : ''}}>Inactivo</option>
+            </select>
+        </div>
+
+        <div>
+            <button type="submit">Actualizar Curso</button>
+        </div>
+    </form>
+
+    <br>
+    <a href="/cursos">Volver a la lista de cursos</a>
+</body>
+</html>

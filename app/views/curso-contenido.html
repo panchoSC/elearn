@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{curso.nombre}} - Contenido</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+
+<body>
+    <div class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/cursos">Cursos</a></li>
+                <li class="breadcrumb-item active">{{curso.nombre}}</li>
+            </ol>
+        </nav>
+
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <!-- Información del Curso -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted" id="progressText">0/0 lecciones completadas</small>
+                            <div>
+                                <span class="badge bg-{{curso.estado === 'activo' ? 'success' : 'warning'}}">
+                                    
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Lecciones -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Lecciones del Curso</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="leccionesContainer">
+                            <!-- El contenido se llenará con JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Test (se mostrará cuando todas las lecciones estén completadas) -->
+                <div class="text-center mt-4" id="testButtonContainer" style="display: none;">
+                    <a href="/curso/{{curso.id}}/test" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Realizar Test
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        const lecciones = JSON.parse('{{lecciones}}');
+        const progreso = JSON.parse('{{progreso}}');
+
+        // Inicializar la página
+        function initializePage() {
+            const leccionesContainer = document.getElementById('leccionesContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const testButtonContainer = document.getElementById('testButtonContainer');
+
+            // Calcular progreso
+            const completadas = progreso.filter(p => p.completed).length;
+            const total = lecciones.length;
+            const porcentaje = total > 0 ? (completadas / total) * 100 : 0;
+
+            // Actualizar barra de progreso
+            progressBar.style.width = porcentaje + '%';
+            progressText.textContent = `${completadas}/${total} lecciones completadas`;
+
+            // Mostrar botón de test si todas las lecciones están completadas
+            if (completadas === total && total > 0) {
+                testButtonContainer.style.display = 'block';
+            }
+
+            // Mostrar lecciones
+            if (lecciones && lecciones.length > 0) {
+                leccionesContainer.innerHTML = lecciones.map((leccion, index) => {
+                    const isCompleted = progreso.some(p => p.lesson_id === leccion.id && p.completed);
+                    return `
+                        <div class="card mb-3 ${isCompleted ? 'border-success' : ''}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            ${leccion.titulo}
+                                            ${isCompleted ? '<i class="bi bi-check-circle-fill text-success ms-2"></i>' : ''}
+                                        </h6>
+                                        <p class="mb-1 text-muted small">${leccion.descripcion}</p>
+                                        <small class="text-muted">Paso ${index + 1}/${total}</small>
+                                    </div>
+                                    <a href="/leccion/${leccion.id}/contenido" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>Ver
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                leccionesContainer.innerHTML = `
+                    <div class="text-center py-4">
+                        <p class="text-muted">No hay lecciones disponibles</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initializePage);
+
+        console.log(curso); // Verifica que el objeto curso tenga la propiedad nombre
+    </script>
+</body>
+
+</html>
