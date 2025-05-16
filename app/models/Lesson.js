@@ -16,104 +16,47 @@ class Lesson {
     }
 
     /* ----------------------------------------------------------
-     * 🔸  INSERTAR  o  ACTUALIZAR
+     * INSERTAR
      * ----------------------------------------------------------*/
     async guardarLessonBD() {
         return new Promise((resolve, reject) => {
-            if (isNaN(this.#course_id)) {
-                return reject(new Error('course_id inválido'));
-            }
-
-            // INSERT
-            if (!this.#id) {
-                const sql = `
-                    INSERT INTO lessons (course_id, titulo, descripcion, orden)
-                    VALUES (?, ?, ?, ?)
-                `;
-                db.run(sql,
-                    [this.#course_id, this.#titulo, this.#descripcion, this.#orden],
-                    function (err) {
-                        if (err) return reject(err);
+            
+            const query = `INSERT INTO lessons (course_id, titulo, descripcion, orden) VALUES (?, ?, ?, ?)`;
+            db.run(query,[this.#course_id, this.#titulo, this.#descripcion, this.#orden],
+                function (err) {
+                    if (err) {return reject(err);}
+                    else{
                         resolve({ id: this.lastID });
-                    });
-            }
-            // UPDATE
-            else {
-                const sql = `
-                    UPDATE lessons
-                    SET course_id = ?, titulo = ?, descripcion = ?, orden = ?
-                    WHERE id = ?
-                `;
-                db.run(sql,
-                    [this.#course_id, this.#titulo, this.#descripcion, this.#orden, this.#id],
-                    function (err) {
-                        if (err) return reject(err);
-                        resolve({ updated: this.changes });
-                    });
-            }
+                    }
+                });
+            
         });
     }
 
     /* ----------------------------------------------------------
-     * 🔸  CARGAR lección por id   (popular la instancia)
+     * CARGAR lección por id   (popular la instancia)
      * ----------------------------------------------------------*/
-    async cargarLessonPorId(id) {
+    async cargarLessonPorId(titulo, course_id) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM lessons WHERE id = ?', [id], (err, row) => {
-                if (err)   return reject(err);
-                if (!row)  return resolve(null);
+            let query = `SELECT * FROM lessons WHERE titulo = ? AND course_ide = ?`;
+            db.get(query, [id], (err, row) => {
+                if (err)   {return reject(err)};
 
                 this.#id          = row.id;
                 this.#course_id   = row.course_id;
                 this.#titulo      = row.titulo;
                 this.#descripcion = row.descripcion;
                 this.#orden       = row.orden;
-                resolve(this);
+                resolve();
             });
+
         });
     }
 
-    /* ----------------------------------------------------------
-     * 🔸  LISTAR todas las lecciones de un curso
-     *     Devuelve array de instancias Lesson
-     * ----------------------------------------------------------*/
-    async listarPorCourseId(courseId) {
-        return new Promise((resolve, reject) => {
-            const cId = parseInt(courseId);
-            if (isNaN(cId)) return reject(new Error('course_id inválido'));
-
-            db.all(
-                'SELECT * FROM lessons WHERE course_id = ? ORDER BY orden ASC',
-                [cId],
-                (err, rows) => {
-                    if (err) return reject(err);
-
-                    const lecciones = rows.map(r =>
-                        new Lesson(r.course_id, r.titulo, r.descripcion, r.orden, r.id)
-                    );
-                    resolve(lecciones);
-                }
-            );
-        });
-    }
+    
 
     /* ----------------------------------------------------------
-     * 🔸  ELIMINAR la lección de la instancia actual
-     * ----------------------------------------------------------*/
-    async eliminarLessonBD() {
-        return new Promise((resolve, reject) => {
-            if (!this.#id) {
-                return reject(new Error('No se puede eliminar una lección sin ID.'));
-            }
-            db.run('DELETE FROM lessons WHERE id = ?', [this.#id], function (err) {
-                if (err) return reject(err);
-                resolve({ deleted: this.changes });
-            });
-        });
-    }
-
-    /* ----------------------------------------------------------
-     * 🔸  Getters públicos
+     * Getters públicos
      * ----------------------------------------------------------*/
     getId()        { return this.#id; }
     getCourseId()  { return this.#course_id; }
@@ -121,7 +64,6 @@ class Lesson {
     getDescripcion(){ return this.#descripcion; }
     getOrden()     { return this.#orden; }
 
-    /* Opcional: setters seguros si los necesitas */
 }
 
 module.exports = Lesson;

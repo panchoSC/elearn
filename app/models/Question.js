@@ -6,6 +6,7 @@ class Question {
     #question_text;
     #question_type;
     #points;
+    #created_at;
 
     constructor(course_id, question_text, question_type = 'texto', points = 1, id = null) {
         this.#id            = id;
@@ -16,103 +17,46 @@ class Question {
     }
 
     /* ----------------------------------------------------------
-     * 🔸  INSERTAR  o  ACTUALIZAR
+     * INSERTAR  o  ACTUALIZAR
      * ----------------------------------------------------------*/
     async guardarQuestionBD() {
         return new Promise((resolve, reject) => {
-            if (isNaN(this.#course_id)) {
-                return reject(new Error('course_id inválido'));
-            }
-
-            // --- INSERT ---
-            if (!this.#id) {
-                const sql = `
-                    INSERT INTO questions (course_id, question_text, question_type, points)
-                    VALUES (?, ?, ?, ?)
-                `;
-                db.run(sql,
-                    [this.#course_id, this.#question_text, this.#question_type, this.#points],
-                    function (err) {
-                        if (err) return reject(err);
-                        resolve({ id: this.lastID });
-                    });
-            }
-            // --- UPDATE ---
-            else {
-                const sql = `
-                    UPDATE questions
-                    SET course_id = ?, question_text = ?, question_type = ?, points = ?
-                    WHERE id = ?
-                `;
-                db.run(sql,
-                    [this.#course_id, this.#question_text, this.#question_type, this.#points, this.#id],
-                    function (err) {
-                        if (err) return reject(err);
-                        resolve({ updated: this.changes });
-                    });
-            }
+            let query=`INSERT INTO questions (course_id, question_text, question_type, points) VALUES (?,?,?,?)`;
+                db.run(query, [this.#course_id, this.#question_text, this.#question_type, this.#points], function (err) {
+                    if (err) {
+                        reject(err); // Error durante la inserción
+                    } else {
+                        resolve({ id: this.lastID }); // Éxito
+                    }
+                });
         });
     }
 
     /* ----------------------------------------------------------
-     * 🔸  CARGAR una pregunta por id (popular la instancia)
+     * CARGAR una pregunta por id (popular la instancia)
      * ----------------------------------------------------------*/
-    async cargarQuestionPorId(id) {
+    async cargarQuestionPorId(question_text, course_id) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM questions WHERE id = ?', [id], (err, row) => {
-                if (err)   return reject(err);
-                if (!row)  return resolve(null);
-
+            let query=`SELECT * FROM questions WHERE question_text = ? AND course_id = ?`;
+            db.get(query, [question_text, course_id], (err, row) => {
+                if (err) { // Si hay un error en la consulta
+                    return reject(err); // Entonmces, devolver el error
+                }
+                
                 this.#id            = row.id;
                 this.#course_id     = row.course_id;
                 this.#question_text = row.question_text;
                 this.#question_type = row.question_type;
                 this.#points        = row.points;
-                resolve(this);
+                this.#created_at    = row.created_at;
+
+                resolve(); // Devolver el usuario encontrado
             });
         });
     }
 
     /* ----------------------------------------------------------
-     * 🔸  LISTAR preguntas de un curso  (array de instancias)
-     * ----------------------------------------------------------*/
-    async listarPorCourseId(courseId) {
-        return new Promise((resolve, reject) => {
-            const cId = parseInt(courseId);
-            if (isNaN(cId)) return reject(new Error('course_id inválido'));
-
-            db.all(
-                'SELECT * FROM questions WHERE course_id = ? ORDER BY id ASC',
-                [cId],
-                (err, rows) => {
-                    if (err) return reject(err);
-
-                    const preguntas = rows.map(r =>
-                        new Question(r.course_id, r.question_text, r.question_type, r.points, r.id)
-                    );
-                    resolve(preguntas);
-                }
-            );
-        });
-    }
-
-    /* ----------------------------------------------------------
-     * 🔸  ELIMINAR la pregunta de la instancia actual
-     * ----------------------------------------------------------*/
-    async eliminarQuestionBD() {
-        return new Promise((resolve, reject) => {
-            if (!this.#id) {
-                return reject(new Error('No se puede eliminar una pregunta sin ID.'));
-            }
-            db.run('DELETE FROM questions WHERE id = ?', [this.#id], function (err) {
-                if (err) return reject(err);
-                resolve({ deleted: this.changes });
-            });
-        });
-    }
-
-    /* ----------------------------------------------------------
-     * 🔸  Getters públicos
+     * Getters públicos
      * ----------------------------------------------------------*/
     getId()          { return this.#id; }
     getCourseId()    { return this.#course_id; }

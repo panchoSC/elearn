@@ -34,13 +34,13 @@ class Content {
     }
 
     /* ----------------------------------------------------------
-     * 🔸  LEER  (por id  ó  por lesson)
+     * LEER
      * ----------------------------------------------------------*/
-    async cargarContentPorId(id) {
+    async cargarContentBD(titulo, lesson_id) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM content WHERE id = ?', [id], (err, row) => {
-                if (err)   return reject(err);
-                if (!row)  return resolve(null);
+            let query = `SELECT * FROM content WHERE titulo = ? AND lesson_id = ?`;
+            db.get(query, [titulo, lesson_id], (err, row) => {
+                if (err)   {return reject(err);}
 
                 // popular la instancia
                 this.#id        = row.id;
@@ -49,65 +49,13 @@ class Content {
                 this.#contenido = row.contenido;
                 this.#orden     = row.orden;
 
-                resolve(this);
-            });
-        });
-    }
-
-    /* -----------------------------------------------------------------
-     *  Si quieres traer TODOS los contenidos de una lección y
-     *  devolverlos como ARRAY de instancias Content:
-     * -----------------------------------------------------------------*/
-    async listarPorLessonId(lessonId) {
-        return new Promise((resolve, reject) => {
-            const idNum = parseInt(lessonId);
-            if (isNaN(idNum)) {
-                return reject(new Error('El lesson_id debe ser un número válido.'));
-            }
-
-            db.all(
-                'SELECT * FROM content WHERE lesson_id = ? ORDER BY orden ASC',
-                [idNum],
-                (err, rows) => {
-                    if (err) return reject(err);
-                    const contenidos = rows.map(r =>
-                        new Content(r.lesson_id, r.titulo, r.contenido, r.orden, r.id)
-                    );
-                    resolve(contenidos);
-                }
-            );
-        });
-    }
-
-    /* ----------------------------------------------------------
-     * 🔸  ELIMINAR registro individual
-     * ----------------------------------------------------------*/
-    async eliminarContentBD() {
-        return new Promise((resolve, reject) => {
-            if (!this.#id) {
-                return reject(new Error('No se puede eliminar un contenido sin ID.'));
-            }
-            db.run('DELETE FROM content WHERE id = ?', [this.#id], function (err) {
-                if (err) return reject(err);
-                resolve({ deleted: this.changes });
+                resolve();
             });
         });
     }
 
     /* ----------------------------------------------------------
-     * 🔸  ELIMINAR por lesson_id (helper – llámalo sobre instancia vacía)
-     * ----------------------------------------------------------*/
-    async eliminarPorLessonId(lessonId) {
-        return new Promise((resolve, reject) => {
-            db.run('DELETE FROM content WHERE lesson_id = ?', [lessonId], function (err) {
-                if (err) return reject(err);
-                resolve({ deleted: this.changes });
-            });
-        });
-    }
-
-    /* ----------------------------------------------------------
-     * 🔸  Getters públicos
+     * Getters públicos
      * ----------------------------------------------------------*/
     getId()        { return this.#id; }
     getLessonId()  { return this.#lesson_id; }

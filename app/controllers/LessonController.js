@@ -36,10 +36,12 @@ class LessonController {
                     estado: formData.get("estado") || "borrador"
                 };
 
-                await this.Lesson.create(lessonData);
+                let lesson = new Lesson(lessonData.get('course_id'), lessonData.get('titulo'), lessonData.get('descripcion'), lessonData.get('orden'));
+                await lesson.guardarLessonBD();
+                //await this.Lesson.create(lessonData);
 
                 // Redirigir al formulario para crear otra lección
-                res.writeHead(302, { Location: `/curso/${course_id}/crear-leccion` });
+                res.writeHead(302, { Location: `/curso/${lesson.getCourseId()}/crear-leccion` });
                 res.end();
             } catch (error) {
                 this.sendError(res, 500, "Error al crear la lección", error);
