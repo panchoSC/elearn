@@ -36,7 +36,7 @@ class Progress {
      * ----------------------------------------------------------*/
     async cargarProgressBD(user_id, lesson_id) {
         return new Promise((resolve, reject) => {
-            let query = `SELECT * FROM progress WHERE user_id = ? AND lesson_id = ?`;
+            let query = `SELECT id, user_id, lesson_id, completed, last_accessed FROM progress WHERE user_id = ? AND lesson_id = ?`;
             db.get(query, [user_id, lesson_id], (err, row) => {
                 if (err)   {return reject(err);}
                 this.#id            = row.id;
@@ -56,7 +56,7 @@ class Progress {
     getId()        { return this.#id; }
     getUserId()    { return this.#user_id; }
     getLessonId()  { return this.#lesson_id; }
-    estaCompleto() { return !!this.#completed; }
+    estaCompleto() { return this.#completed; }
     getLastAccess(){ return this.#last_accessed; }
 }
 

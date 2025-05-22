@@ -36,15 +36,13 @@ class Answer {
      * ----------------------------------------------------------*/
     async cargarAnswerBD(answer_text, question_id) {
         return new Promise((resolve, reject) => {
-            let query = `SELECT * FROM answers WHERE answer_text = ? AND question_id = ?`;
+            let query = `SELECT question_id, answer_text, is_correct FROM answers WHERE answer_text = ? AND question_id = ?`;
             db.get(query, [answer_text, question_id], (err, row) => {
                 if (err)   {return reject(err)};
 
-                this.#id          = row.id;
                 this.#question_id = row.question_id;
                 this.#answer_text = row.answer_text;
                 this.#is_correct  = row.is_correct;
-                this.#created_at  = row.created_at;
                 resolve();
             });
 
@@ -58,8 +56,13 @@ class Answer {
     getId()         { return this.#id; }
     getQuestionId() { return this.#question_id; }
     getTexto()      { return this.#answer_text; }
-    esCorrecta()    { return !!this.#is_correct; }
+    esCorrecta()    { return this.#is_correct; }
     getFechaCreacion(){ return this.#created_at; }
+
+    setTexto(nuevoTexto){
+        this.#answer_text=nuevoTexto;
+
+    }
 }
 
 module.exports = Answer;

@@ -47,7 +47,7 @@ class StudentAnswer {
      * ----------------------------------------------------------*/
     async cargarRespuestaBD(student_id, question_id) {
         return new Promise((resolve, reject) => {
-            let query=`SELECT * FROM student_answers WHERE student_id = ? AND question_id = ?`;
+            let query=`SELECT id, student_id, question_id, answer_id, answer_text, is_correct, points_earned, submmitted_at FROM student_answers WHERE student_id = ? AND question_id = ?`;
             db.get(query, [student_id, question_id], (err, row) => {
                 if (err) { // Si hay un error en la consulta
                     return reject(err); // Entonmces, devolver el error
@@ -76,9 +76,14 @@ class StudentAnswer {
     getQuestionId()    { return this.#question_id; }
     getAnswerId()      { return this.#answer_id; }
     getAnswerText()    { return this.#answer_text; }
-    esCorrecta()       { return !!this.#is_correct; }
+    esCorrecta()       { return this.#is_correct; }
     getPuntos()        { return this.#points_earned; }
     getFechaEnvio()    { return this.#submitted_at; }
+
+    setTexto(nuevoTexto){
+        this.#answer_text=nuevoTexto;
+
+    }
 }
 
 module.exports = StudentAnswer;

@@ -1,3 +1,4 @@
+const sqlite3 = require('sqlite3').verbose();
 const db = require('../data/db');
 
 class Lesson {
@@ -7,7 +8,7 @@ class Lesson {
     #descripcion;
     #orden;
 
-    constructor(course_id, titulo, descripcion = '', orden = 1, id = null) {
+    constructor(id, course_id, titulo, descripcion, orden) {
         this.#id         = id;
         this.#course_id  = parseInt(course_id);
         this.#titulo     = titulo;
@@ -38,8 +39,8 @@ class Lesson {
      * ----------------------------------------------------------*/
     async cargarLessonPorId(titulo, course_id) {
         return new Promise((resolve, reject) => {
-            let query = `SELECT * FROM lessons WHERE titulo = ? AND course_ide = ?`;
-            db.get(query, [id], (err, row) => {
+            let query = `SELECT id, course_id, titulo, descripcion, orden FROM lessons WHERE titulo = ? AND course_id = ?`;
+            db.get(query, [titulo, course_id], (err, row) => {
                 if (err)   {return reject(err)};
 
                 this.#id          = row.id;
@@ -48,6 +49,27 @@ class Lesson {
                 this.#descripcion = row.descripcion;
                 this.#orden       = row.orden;
                 resolve();
+            });
+
+        });
+    }
+
+    async cargarLeccionesPorCursoId(course_id) {
+        return new Promise((resolve, reject) => {
+            let query = `SELECT id, course_id, titulo, descripcion, orden FROM lessons WHERE course_id = ?`;
+            db.all(query, [course_id], (err, rows) => {
+
+                if (err)   {return reject(err)};
+                const lecciones = rows.map(leccion => new Lesson(
+                    leccion.id,
+                    leccion.course_id,
+                    leccion.titulo,
+                    leccion.descripcion,
+                    leccion.orden,
+                    
+                ));
+                console.log(lecciones[0].getTitulo());
+                resolve(lecciones);
             });
 
         });
@@ -63,6 +85,19 @@ class Lesson {
     getTitulo()    { return this.#titulo; }
     getDescripcion(){ return this.#descripcion; }
     getOrden()     { return this.#orden; }
+
+    setTitulo(nuevoTitulo){
+        this.#titulo=nuevoTitulo;
+
+    }
+    setDescripcion(nuevaDescripcion){
+        this.#descripcion=nuevaDescripcion;
+
+    }
+    setOrden(nuevoOrden){
+        this.#orden=nuevoOrden;
+
+    }
 
 }
 

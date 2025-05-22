@@ -17,7 +17,7 @@ class Question {
     }
 
     /* ----------------------------------------------------------
-     * INSERTAR  o  ACTUALIZAR
+     * INSERTAR
      * ----------------------------------------------------------*/
     async guardarQuestionBD() {
         return new Promise((resolve, reject) => {
@@ -37,7 +37,7 @@ class Question {
      * ----------------------------------------------------------*/
     async cargarQuestionPorId(question_text, course_id) {
         return new Promise((resolve, reject) => {
-            let query=`SELECT * FROM questions WHERE question_text = ? AND course_id = ?`;
+            let query=`SELECT id, course_id, question_text, question_type, points, created_at FROM questions WHERE question_text = ? AND course_id = ?`;
             db.get(query, [question_text, course_id], (err, row) => {
                 if (err) { // Si hay un error en la consulta
                     return reject(err); // Entonmces, devolver el error
@@ -63,6 +63,19 @@ class Question {
     getTexto()       { return this.#question_text; }
     getTipo()        { return this.#question_type; }
     getPuntos()      { return this.#points; }
+
+    setTexto(nuevoTexto){
+        this.#question_text=nuevoTexto;
+
+    }
+    setTipo(nuevoTipo){
+        this.#question_type=nuevoTipo;
+
+    }
+    setPuntos(nuevosPuntos){
+        this.#points=nuevosPuntos;
+
+    }
 }
 
 module.exports = Question;

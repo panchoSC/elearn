@@ -16,7 +16,7 @@ class Content {
     }
 
     /* ----------------------------------------------------------
-     * 🔸  INSERTAR  o  ACTUALIZAR
+     * INSERTAR
      * ----------------------------------------------------------*/
     async guardarContentBD() {
         return new Promise((resolve, reject)=>{
@@ -38,12 +38,11 @@ class Content {
      * ----------------------------------------------------------*/
     async cargarContentBD(titulo, lesson_id) {
         return new Promise((resolve, reject) => {
-            let query = `SELECT * FROM content WHERE titulo = ? AND lesson_id = ?`;
+            let query = `SELECT lesson_id, titulo, contenido, orden FROM content WHERE titulo = ? AND lesson_id = ? ORDER BY orden ASC`;
             db.get(query, [titulo, lesson_id], (err, row) => {
                 if (err)   {return reject(err);}
 
                 // popular la instancia
-                this.#id        = row.id;
                 this.#lesson_id = row.lesson_id;
                 this.#titulo    = row.titulo;
                 this.#contenido = row.contenido;
@@ -62,6 +61,19 @@ class Content {
     getTitulo()    { return this.#titulo; }
     getContenido() { return this.#contenido; }
     getOrden()     { return this.#orden; }
+
+    setTitulo(nuevoTitulo){
+        this.#titulo=nuevoTitulo;
+
+    }
+    setContenido(nuevoContenido){
+        this.#contenido=nuevoContenido;
+
+    }
+    setOrden(nuevoOrden){
+        this.#orden=nuevoOrden;
+
+    }
 }
 
 module.exports = Content;
